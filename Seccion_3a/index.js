@@ -32,3 +32,7 @@ let agenda = [
 app.get('/api/persons', (request, response) => {
     response.json(agenda)
 })
+
+app.get('/info', (request, response) => {
+    response.send(`<p>Phonebook has info for ${agenda.length} people</p> <p>${new Date()}</p>`)
+})
