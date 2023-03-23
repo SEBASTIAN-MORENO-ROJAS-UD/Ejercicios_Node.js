@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+const morgan = require('morgan')
 
 const PORT = 3001
 app.listen(PORT, () => {
@@ -28,6 +29,16 @@ let agenda = [
         number: "39-23-6423122"
     }
 ]
+//////////Ejecucion de middlewares necesarios//////////
+app.use(express.json())
+
+morgan.token('body', (request) => JSON.stringify(request.body))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+
+//Otra forma de usar el middleware Morgan
+/*app.get('/endpoint', morgan("tiny"), (request, response) => {
+    response.end()
+})*/
 
 app.get('/api/persons', (request, response) => {
     response.json(agenda)
@@ -35,4 +46,53 @@ app.get('/api/persons', (request, response) => {
 
 app.get('/info', (request, response) => {
     response.send(`<p>Phonebook has info for ${agenda.length} people</p> <p>${new Date()}</p>`)
+})
+
+app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const entrada = agenda.find(entrada => entrada.id === id)
+
+    if(entrada){
+        response.json(entrada)
+    }
+    else{
+        response.status(404).end()
+    }
+})
+
+app.delete('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    agenda = agenda.filter(entrada => entrada.id !== id)
+    
+    response.status(204).end()
+})
+
+app.post('/api/persons', (request, response) => {
+    const body = request.body
+    
+    if(!body.name){
+        response.status(400).json({
+            error: "Name missing"
+        })
+    }
+    else if(!body.number){
+        response.status(400).json({
+            error: "Number missing"
+        })
+    }
+    else if(agenda.find(entrada => entrada.name == body.name)){
+        response.status(400).json({
+            error: "Name must be unique"
+        })
+    }
+    else{
+        let idRandom = parseInt(Math.random() * (100 - 1) + 1)
+        const entrada = {
+            id: idRandom,
+            name: body.name,
+            number: body.number
+        }
+        agenda.push(entrada)
+        response.json(entrada)
+    }
 })
